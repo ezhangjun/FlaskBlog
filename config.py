@@ -25,7 +25,7 @@ class DevelopmentConfig(Config):
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     SQLALCHEMY_DATABASE_URI = "mysql+mysqldb://root:123456@127.0.0.1/flaskblog?charset=utf8"
-
+    FLASKY_POSTS_PER_PAGE = 5
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
