@@ -17,6 +17,13 @@ from . import login_manager
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+class Follow(db.Model):
+    __tablename__='follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -32,6 +39,17 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+
+    #谁关注了我
+    followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
+    #我关注了谁
+    followed = db.relationship('Follow', foreign_keys=[Follow.follower_id],
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
 
     @property
     def password(self):
@@ -51,6 +69,7 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(name='Administrator').first()
             else:
                 self.role = Role.query.filter_by(default=True).first()
+        self.follow(self)
 
     def can(self, permissions):
         return self.role is not None and \
@@ -63,6 +82,28 @@ class User(UserMixin, db.Model):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
         db.session.commit()
+
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+            db.session.commit()
+
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_following(self, user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    def is_followed_by(self,user):
+        return  self.followers.filter_by(follower_id=user.id).first() is not None
+
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id==Post.author_id)\
+            .filter(Follow.follower_id==self.id)
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -136,3 +177,5 @@ class Post(db.Model):
         target.body_html=bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),tags=allowed_tags,strip=True))
 db.event.listen(Post.body,'set',Post.on_change_body)
+
+
