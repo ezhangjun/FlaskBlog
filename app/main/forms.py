@@ -15,3 +15,7 @@ class EditProfileForm(Form):
 class PostForm(Form):
     body = PageDownField(u"内容", validators=[Required()])
     submit = SubmitField(u'提交')
+
+class CommentForm(Form):
+    body = PageDownField(u"", validators=[Required()])
+    submit = SubmitField(u'提交')

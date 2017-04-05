@@ -27,6 +27,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = "mysql+mysqldb://root:123456@127.0.0.1/flaskblog?charset=utf8"
     FLASKY_POSTS_PER_PAGE = 5
     FLASKY_FOLLOWERS_PER_PAGE=2
+    FLASKY_COMMENTS_PER_PAGE = 3
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
